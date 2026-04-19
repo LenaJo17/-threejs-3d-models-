@@ -45,7 +45,8 @@ import {
 } from 'three';
 
 import { unzlibSync } from '../libs/fflate.module.js';
-import { NURBSCurve } from '../curves/NURBSCurve.js';
+// Debe quedar exactamente así:
+import { NURBSCurve } from '../jsm/curves/NURBSCurve.js';
 
 let fbxTree;
 let connections;
