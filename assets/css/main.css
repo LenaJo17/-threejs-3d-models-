@@ -1,91 +1,122 @@
-body {
-	margin: 0;
-	background-color: #000;
-	color: #fff;
-	font-family: Monospace;
-	font-size: 13px;
-	line-height: 24px;
-	overscroll-behavior: none;
+/* Importar fuentes modernas */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500&display=swap');
+
+:root {
+    --accent-color: #00d2ff;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --dark-bg: #0a0a0a;
 }
 
-a {
-	color: #ff0;
-	text-decoration: none;
+body { 
+    margin: 0; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 100vh; 
+    background-color: var(--dark-bg); 
+    color: #e0e0e0;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden; /* Evita scrolls accidentales */
 }
 
-a:hover {
-	text-decoration: underline;
+/* Navbar con efecto Blur */
+.navbar {
+    background: rgba(10, 10, 10, 0.8) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 1rem 0;
+    z-index: 10;
 }
 
-button {
-	cursor: pointer;
-	text-transform: uppercase;
+.navbar-brand {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent-color) !important;
+    text-transform: uppercase;
+    font-size: 1rem;
 }
 
-#info {
-	position: absolute;
-	top: 0px;
-	width: 100%;
-	padding: 10px;
-	box-sizing: border-box;
-	text-align: center;
-	-moz-user-select: none;
-	-webkit-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-	pointer-events: none;
-	z-index: 1; /* TODO Solve this in HTML */
+/* Contenedor del Personaje */
+#canvas-container { 
+    flex: 1; 
+    position: relative; 
+    width: 100%;
+    background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
 }
 
-a, button, input, select {
-	pointer-events: auto;
+/* Panel de Controles Flotante */
+.controls-hint { 
+    position: absolute; 
+    top: 30px; 
+    right: 30px; 
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 25px; 
+    border-radius: 20px; 
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    width: 240px;
+    animation: slideIn 0.8s ease-out;
+    z-index: 5;
 }
 
-.lil-gui {
-	z-index: 2 !important; /* TODO Solve this in HTML */
+.controls-hint h6 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    margin-bottom: 20px;
+    color: var(--accent-color);
+    text-transform: uppercase;
 }
 
-@media all and ( max-width: 640px ) {
-	.lil-gui.root { 
-		right: auto;
-		top: auto;
-		max-height: 50%;
-		max-width: 80%;
-		bottom: 0;
-		left: 0;
-	}
+.control-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    transition: transform 0.2s;
 }
 
-#overlay {
-	position: absolute;
-	font-size: 16px;
-	z-index: 2;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-direction: column;
-	background: rgba(0,0,0,0.7);
+.control-row:hover {
+    transform: translateX(5px);
+    color: white;
 }
 
-	#overlay button {
-		background: transparent;
-		border: 0;
-		border: 1px solid rgb(255, 255, 255);
-		border-radius: 4px;
-		color: #ffffff;
-		padding: 12px 18px;
-		text-transform: uppercase;
-		cursor: pointer;
-	}
-
-#notSupported {
-	width: 50%;
-	margin: auto;
-	background-color: #f00;
-	margin-top: 20px;
-	padding: 10px;
+kbd {
+    background: #1a1a1a;
+    color: var(--accent-color);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 4px 10px;
+    margin-right: 15px;
+    font-weight: bold;
+    min-width: 35px;
+    text-align: center;
+    box-shadow: 0 3px 0 #000;
+    font-family: 'Inter', sans-serif;
 }
+
+/* Footer */
+footer { 
+    background: #050505; 
+    padding: 20px 0; 
+    border-top: 1px solid var(--glass-border);
+    font-size: 0.85rem;
+    z-index: 10;
+}
+
+footer strong {
+    color: var(--accent-color);
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+}
+
+/* Animaciones */
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(50px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+canvas { outline: none; }

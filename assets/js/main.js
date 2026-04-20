@@ -1,56 +1,35 @@
 import * as THREE from 'three';
-import Stats from 'three/addons/libs/stats.module.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-let camera, scene, renderer, stats, object, mixer;
+let camera, scene, renderer, mixer;
+let actions = {};
+let activeAction, previousAction;
 const clock = new THREE.Clock();
-const manager = new THREE.LoadingManager();
 
-const params = {
-    asset: 'Samba Dancing' 
-};
+const animationsList = [
+    { name: "hiphop", file: "Hip Hop Dancing.fbx" },
+    { name: "jump", file: "Joyful Jump.fbx" },
+    { name: "strafe", file: "Strafing.fbx" },
+    { name: "running", file: "Running.fbx" },
+    { name: "entry", file: "Entry.fbx" }
+];
 
 init();
 
 function init() {
-    const container = document.createElement('div');
-    document.body.appendChild(container);
-
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
-    camera.position.set(100, 200, 300);
+    const container = document.getElementById('canvas-container');
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xa0a0a0);
-    scene.fog = new THREE.Fog(0xa0a0a0, 200, 1000);
+    scene.background = new THREE.Color(0x222222);
+    // Añadimos niebla para profundidad
+    scene.fog = new THREE.Fog(0x222222, 500, 1500);
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2.5);
-    hemiLight.position.set(0, 200, 0);
-    scene.add(hemiLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
-    dirLight.position.set(0, 200, 100);
-    dirLight.castShadow = true;
-    scene.add(dirLight);
-
-    const mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(2000, 2000),
-        new THREE.MeshPhongMaterial({ color: 0x999999, depthWrite: false })
-    );
-    mesh.rotation.x = - Math.PI / 2;
-    mesh.receiveShadow = true;
-    scene.add(mesh);
-
-    const grid = new THREE.GridHelper(2000, 20, 0x000000, 0x000000);
-    grid.material.opacity = 0.2;
-    grid.material.transparent = true;
-    scene.add(grid);
+    camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 2000);
+    camera.position.set(100, 200, 400);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setAnimationLoop(animate);
+    renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
 
@@ -58,46 +37,93 @@ function init() {
     controls.target.set(0, 100, 0);
     controls.update();
 
-    stats = new Stats();
-    container.appendChild(stats.dom);
+    // Luces
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2);
+    scene.add(hemiLight);
 
-    loadAsset(params.asset);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(0, 200, 100);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
 
-    window.addEventListener('resize', onWindowResize);
-}
+    // Suelo para que el personaje no flote en la nada
+    const grid = new THREE.GridHelper(2000, 20, 0x000000, 0x444444);
+    scene.add(grid);
 
-function loadAsset(assetName) {
-    const loader = new FBXLoader(manager);
-    // Ruta corregida a tu carpeta de modelos
-    loader.load('./assets/models/fbx/' + assetName + '.fbx', function (group) {
-        if (object) scene.remove(object);
-        object = group;
+    const loader = new FBXLoader();
 
-        if (object.animations && object.animations.length) {
-            mixer = new THREE.AnimationMixer(object);
-            const action = mixer.clipAction(object.animations[0]);
-            action.play();
-        }
-
-        object.traverse(child => {
+    // 1. Cargar el Personaje (Asegúrate que el archivo se llame Personaje.fbx con P mayúscula si así está en tu carpeta)
+    loader.load('./assets/models/fbx/Personaje.fbx', (model) => {
+        model.scale.setScalar(0.8); // Ajuste de tamaño
+        model.traverse(child => {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
             }
         });
-        scene.add(object);
-    }, undefined, (e) => console.error('Error:', e));
+
+        mixer = new THREE.AnimationMixer(model);
+        scene.add(model);
+
+        // 2. Cargar animaciones
+        animationsList.forEach(anim => {
+            loader.load('./assets/models/fbx/' + anim.file, (animData) => {
+                const action = mixer.clipAction(animData.animations[0]);
+                actions[anim.name] = action;
+
+                // Iniciar con "entry" por defecto
+                if (anim.name === "entry") {
+                    activeAction = action;
+                    activeAction.play();
+                }
+            }, undefined, (err) => console.error("Error cargando: " + anim.file, err));
+        });
+    });
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('resize', onWindowResize);
+
+    animate();
+}
+
+function fadeToAction(name, duration = 0.5) {
+    if (!actions[name] || activeAction === actions[name]) return;
+
+    previousAction = activeAction;
+    activeAction = actions[name];
+
+    if (previousAction) {
+        previousAction.fadeOut(duration);
+    }
+
+    activeAction
+        .reset()
+        .setEffectiveTimeScale(1)
+        .setEffectiveWeight(1)
+        .fadeIn(duration)
+        .play();
+}
+
+function onKeyDown(event) {
+    switch (event.key) {
+        case '1': fadeToAction('hiphop'); break;
+        case '2': fadeToAction('jump'); break;
+        case '3': fadeToAction('strafe'); break;
+        case '4': fadeToAction('running'); break;
+        case '5': fadeToAction('entry'); break;
+    }
 }
 
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const container = document.getElementById('canvas-container');
+    camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(container.clientWidth, container.clientHeight);
 }
 
 function animate() {
+    requestAnimationFrame(animate);
     const delta = clock.getDelta();
     if (mixer) mixer.update(delta);
     renderer.render(scene, camera);
-    stats.update();
 }
